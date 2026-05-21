@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Husjakten</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a1a;min-height:100vh}
+.app{max-width:780px;margin:0 auto;padding:1.5rem 1rem 4rem}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+.logo{font-size:22px;font-weight:600;color:#1a1a1a}.logo span{color:#1D9E75}
+.sync-status{font-size:12px;color:#888;display:flex;align-items:center;gap:5px}
+.dot{width:7px;height:7px;border-radius:50%;background:#1D9E75}
+.dot.syncing{background:#f59e0b}
+.dot.error{background:#e24b4a}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem}
+.stat{background:#fff;border-radius:10px;padding:.75rem 1rem;border:0.5px solid #e5e5e3}
+.stat-label{font-size:12px;color:#888;margin-bottom:4px}
+.stat-val{font-size:22px;font-weight:600;color:#1a1a1a}
+.filter-row{display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap;align-items:center}
+.filter-btn{font-size:13px;padding:6px 13px;border:0.5px solid #ddd;border-radius:8px;background:#fff;color:#666;cursor:pointer;transition:all .15s}
+.filter-btn:hover{background:#f0f0ee}
+.filter-btn.active{background:#f0f0ee;color:#1a1a1a;border-color:#aaa}
+.sort-select{font-size:13px;padding:6px 10px;border:0.5px solid #ddd;border-radius:8px;background:#fff;color:#1a1a1a;margin-left:auto;cursor:pointer}
+.cards{display:flex;flex-direction:column;gap:1rem}
+.card{background:#fff;border:0.5px solid #e5e5e3;border-radius:12px;overflow:hidden;transition:box-shadow .15s}
+.card:hover{box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.card.approved{border-left:3px solid #1D9E75}
+.card-top{display:grid;grid-template-columns:165px 1fr}
+.card-img{width:165px;height:135px;object-fit:cover;display:block}
+.card-img-placeholder{width:165px;height:135px;background:#f0f0ee;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:28px}
+.card-main{padding:.85rem 1rem}
+.card-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:.45rem}
+.card-address{font-size:14px;font-weight:600;color:#1a1a1a;line-height:1.35}
+.card-link{font-size:11px;color:#888;text-decoration:none;display:flex;align-items:center;gap:3px;white-space:nowrap;flex-shrink:0}
+.card-link:hover{color:#1a1a1a}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:.5rem}
+.tag{font-size:10px;padding:2px 8px;border-radius:7px;border:0.5px solid #e5e5e3;color:#666;background:#f5f5f3}
+.tag.yes{color:#0F6E56;background:#E1F5EE;border-color:#9FE1CB}
+.tag.no{color:#993C1D;background:#FAECE7;border-color:#F5C4B3}
+.tag.info{color:#185FA5;background:#E6F1FB;border-color:#B5D4F4}
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:.45rem}
+.metric{text-align:center}
+.metric-val{font-size:13px;font-weight:600;color:#1a1a1a}
+.metric-label{font-size:10px;color:#888}
+.price-row{display:flex;align-items:baseline;gap:6px}
+.price{font-size:17px;font-weight:600;color:#1a1a1a}
+.price-sub{font-size:11px;color:#888}
+.card-bottom{border-top:0.5px solid #f0f0ee;padding:.65rem 1rem;display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;background:#fafaf8}
+.status-checks{display:flex;gap:8px;flex-wrap:wrap;flex:1}
+.chk{display:flex;align-items:center;gap:4px;font-size:11px;color:#888;cursor:pointer;user-select:none}
+.chk input{cursor:pointer;width:13px;height:13px;accent-color:#1D9E75}
+.chk.done{color:#1a1a1a;font-weight:500}
+.votes{display:flex;gap:6px;align-items:center}
+.voter{display:flex;flex-direction:column;align-items:center;gap:2px}
+.voter-name{font-size:10px;color:#888}
+.vote-btns{display:flex;gap:2px}
+.vote-btn{width:27px;height:27px;border-radius:7px;border:0.5px solid #e5e5e3;background:#f5f5f3;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#888;transition:all .1s}
+.vote-btn:hover{background:#eee}
+.vote-btn.up.active{background:#E1F5EE;border-color:#9FE1CB;color:#0F6E56}
+.vote-btn.down.active{background:#FAECE7;border-color:#F5C4B3;color:#993C1D}
+.score-badge{font-size:13px;font-weight:600;min-width:22px;text-align:center;color:#1a1a1a}
+.del-btn{font-size:11px;padding:4px 9px;border:0.5px solid #e5e5e3;border-radius:7px;background:transparent;color:#bbb;cursor:pointer;margin-left:auto}
+.del-btn:hover{color:#e24b4a;border-color:#e24b4a}
+.utleid-badge{font-size:10px;padding:2px 7px;border-radius:7px;background:#FAECE7;color:#993C1D;border:0.5px solid #F5C4B3;display:inline-block;margin-left:5px;vertical-align:middle}
+.loading{text-align:center;padding:3rem;color:#888;font-size:14px}
+@media(max-width:500px){
+  .card-top{grid-template-columns:120px 1fr}
+  .card-img,.card-img-placeholder{width:120px;height:110px}
+  .metrics{grid-template-columns:repeat(3,1fr)}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="logo">Hus<span>jakten</span></div>
+    <div class="sync-status"><div class="dot" id="dot"></div><span id="sync-label">Laster...</span></div>
+  </div>
+  <div class="stats-row" id="stats"></div>
+  <div class="filter-row">
+    <button class="filter-btn active" onclick="setFilter('all',this)">Alle</button>
+    <button class="filter-btn" onclick="setFilter('new',this)">Nye</button>
+    <button class="filter-btn" onclick="setFilter('contacted',this)">Kontaktet</button>
+    <button class="filter-btn" onclick="setFilter('visited',this)">Visning</button>
+    <button class="filter-btn" onclick="setFilter('approved',this)">Godkjent</button>
+    <select class="sort-select" onchange="setSort(this.value)">
+      <option value="id">Rekkefølge</option>
+      <option value="rent">Pris ↑</option>
+      <option value="sqm">Størrelse ↓</option>
+      <option value="score">Score ↓</option>
+    </select>
+  </div>
+  <div class="cards" id="cards"><div class="loading">Henter boliger...</div></div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://tdqqaxuenokvtwisbrtt.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_F9Mt9SfrZi81pDu6MUWdtQ_v6bPDzl_';
+const TABLE = 'listings';
+
+const VOTERS = ['Henrik','Martin','Farid'];
+const STATUSES = [
+  {key:'contacted',label:'Kontaktet'},
+  {key:'visited',label:'Visning'},
+  {key:'applied',label:'Søkt'},
+  {key:'approved',label:'Godkjent'}
+];
+
+const SEED = [
+  {id:1,address:'Røa/Ullernåsen – Ostadalsveien 54',type:'Leilighet',rent:40000,deposit:0,sqm:176,bedrooms:4,bathrooms:2,elIncluded:true,netIncluded:true,parking:'Garasje (EL)',outdoor:true,moveIn:'15.07.2026',travelCar:'20 min',travelPublic:'25 min',gym:'Evo Fitness Røa / Basic',utleid:false,link:'https://www.finn.no/realestate/lettings/ad.html?finnkode=462185634',img:'https://images.finncdn.no/dynamic/1280w/item/462185634/d000252c-f04a-49ce-a05b-2bcf971210bf'},
+  {id:2,address:'Grønland – Borggata 12D',type:'Leilighet',rent:40000,deposit:80000,sqm:88,bedrooms:4,bathrooms:1,elIncluded:false,netIncluded:true,parking:'Garasje (tillegg)',outdoor:true,moveIn:'01.04.2026',travelCar:'5 min',travelPublic:'5 min',gym:'Fresh Fitness Grønland / SATS Schous plass',utleid:false,link:'https://www.finn.no/realestate/lettings/ad.html?finnkode=412711335',img:'https://images.finncdn.no/dynamic/1280w/2026/3/vertical-2/29/5/412/711/335_32da9965-b3ef-44be-9fd2-332354fd872c.jpg'},
+  {id:3,address:'Majorstuen – Schønings Gate 14B',type:'Leilighet',rent:52000,deposit:156000,sqm:120,bedrooms:5,bathrooms:2,elIncluded:false,netIncluded:false,parking:'Nei',outdoor:true,moveIn:'01.07.2026',travelCar:'10 min',travelPublic:'10 min',gym:'SATS Vinderen / Fresh Fitness Majorstuen',utleid:false,link:'https://www.finn.no/realestate/lettings/ad.html?finnkode=421635793',img:'https://images.finncdn.no/dynamic/1280w/2026/5/vertical-2/12/3/421/635/793_d5455528-67b8-4d46-843c-45007c8704b1.jpg'},
+  {id:4,address:'Grünerløkka – Ebbells Gate 2A',type:'Leilighet',rent:45500,deposit:132000,sqm:100,bedrooms:4,bathrooms:2,elIncluded:false,netIncluded:true,parking:'Nei',outdoor:true,moveIn:'01.08.2026',travelCar:'5 min',travelPublic:'5 min',gym:'EVO Grünerløkka / SATS Schous plass',utleid:false,link:'https://www.finn.no/realestate/lettings/ad.html?finnkode=461955621',img:'https://images.finncdn.no/dynamic/1280w/2026/5/vertical-2/14/1/461/955/621_3dd23446-54c5-4585-ad61-e435bebefca7.jpg'},
+  {id:5,address:'Vinderen/Borgen – Tuengen allé 27B',type:'Enebolig',rent:55000,deposit:0,sqm:230,bedrooms:4,bathrooms:3,elIncluded:false,netIncluded:true,parking:'Garasje + oppstilling',outdoor:true,moveIn:'—',travelCar:'15 min',travelPublic:'20 min',gym:'SATS Vinderen / Vinderen Gym & Kampsport',utleid:false,link:'https://www.finn.no/464222357',img:'https://images.finncdn.no/dynamic/1280w/2026/5/vertical-2/20/7/464/222/357_e3b6b07b-676d-4483-a14d-26d609cad313.jpg'},
+  {id:6,address:'Eiksmarka – Basaltveien 37',type:'Leilighet',rent:38000,deposit:0,sqm:138,bedrooms:3,bathrooms:2,elIncluded:false,netIncluded:false,parking:'Garasje (inkl)',outdoor:true,moveIn:'04.05.2026',travelCar:'25 min',travelPublic:'35 min',gym:'EVO Stabekk / Friskis & Svettis Bærum',utleid:true,link:'https://www.finn.no/461664889',img:'https://images.finncdn.no/dynamic/1280w/2026/4/vertical-2/29/9/461/664/889_f4d8d8aa-dbd2-4ede-9970-c668a575c1bd.jpg'},
+  {id:7,address:'Ammerud – Ammerudhellinga 54',type:'Enebolig',rent:28000,deposit:0,sqm:160,bedrooms:4,bathrooms:1,elIncluded:false,netIncluded:false,parking:'Biloppstilling',outdoor:true,moveIn:'01.07.2026',travelCar:'20 min',travelPublic:'20 min',gym:'SATS Storo / Fresh Fitness Ammerud',utleid:false,link:'https://www.finn.no/461688099',img:'https://images.finncdn.no/dynamic/1280w/2026/4/vertical-2/28/9/461/688/099_809265b5-8a5c-4b48-a5d2-d9fa553a9edb.jpg'},
+  {id:8,address:'Røa – Ankerveien 66B',type:'Leilighet',rent:29000,deposit:87000,sqm:115,bedrooms:3,bathrooms:1,elIncluded:false,netIncluded:true,parking:'Garasje (inkl)',outdoor:true,moveIn:'22.05.2026',travelCar:'20 min',travelPublic:'25 min',gym:'Evo Fitness Røa / Basic Treningssenter',utleid:true,link:'https://www.finn.no/456263907',img:'https://images.finncdn.no/dynamic/1280w/2026/3/vertical-2/19/7/456/263/907_3f71e320-bf4d-49a6-b86f-a71080f3155c.jpg'},
+  {id:9,address:'Fjellhamar – Christian Michelsens vei 82',type:'Enebolig',rent:34000,deposit:0,sqm:249,bedrooms:3,bathrooms:2,elIncluded:false,netIncluded:true,parking:'Dobbeltgarasje',outdoor:true,moveIn:'15.07.2026',travelCar:'25 min',travelPublic:'35 min',gym:'Elavit Fjellhamar / SATS Metro',utleid:false,link:'https://www.finn.no/462862638',img:'https://images.finncdn.no/dynamic/1280w/2026/5/vertical-2/08/8/462/862/638_60514d84-0979-40e2-8233-3dfd6af0db7f.jpg'},
+  {id:10,address:'Lørenskog – Gamleveien 89',type:'Leilighet',rent:28000,deposit:0,sqm:112,bedrooms:3,bathrooms:2,elIncluded:false,netIncluded:true,parking:'2x Garasje EL (inkl)',outdoor:true,moveIn:'01.06.2026',travelCar:'20 min',travelPublic:'30 min',gym:'MOVA Lørenskog / SATS Metro / Elavit',utleid:true,link:'https://www.finn.no/462904911',img:'https://images.finncdn.no/dynamic/1280w/2026/5/vertical-2/13/1/462/904/911_0d2c4c1b-6a0c-4b64-b15d-7d241e4ba9e8.jpg'},
+  {id:11,address:'Slependen – Hiltonåsen 102',type:'Rekkehus',rent:29900,deposit:0,sqm:152,bedrooms:3,bathrooms:2,elIncluded:false,netIncluded:true,parking:'Garasje EL (inkl)',outdoor:true,moveIn:'25.06.2026',travelCar:'30 min',travelPublic:'40 min',gym:'XT Sandvika / Friskis & Svettis Bærum',utleid:false,link:'https://www.finn.no/463802870',img:'https://images.finncdn.no/dynamic/1280w/2026/5/vertical-2/15/0/463/802/870_d642d2af-7905-468f-aa49-aeff6a7d57d9.jpg'},
+  {id:12,address:'Hagan – Karushøgda 2',type:'Enebolig',rent:25000,deposit:75000,sqm:140,bedrooms:3,bathrooms:1,elIncluded:true,netIncluded:true,parking:'Garasje',outdoor:true,moveIn:'01.07.2026',travelCar:'25 min',travelPublic:'35 min',gym:'Access Treningssenter Hagan',utleid:false,link:'https://www.finn.no/463417821',img:'https://images.finncdn.no/dynamic/1280w/item/463417821/f101109b-0964-46d4-a195-dabfab43b857'},
+  {id:13,address:'Vestli – Vestlisvingen 120',type:'Rekkehus',rent:29900,deposit:89000,sqm:136,bedrooms:3,bathrooms:1,elIncluded:false,netIncluded:true,parking:'Garasje EL',outdoor:true,moveIn:'18.05.2026',travelCar:'22 min',travelPublic:'25 min',gym:'SATS Storo / Fresh Fitness Vestli',utleid:false,link:'https://www.finn.no/397547851',img:'https://images.finncdn.no/dynamic/1280w/4c/4caf50c5-3704-425b-8bb5-fe05e669391d'},
+  {id:14,address:'Nesøya – Margretes vei 7B',type:'Enebolig',rent:60000,deposit:0,sqm:320,bedrooms:4,bathrooms:3,elIncluded:false,netIncluded:true,parking:'Dobbeltgarasje EL',outdoor:true,moveIn:'01.07.2026',travelCar:'35 min',travelPublic:'50 min',gym:'EVO Stabekk / Friskis & Svettis Asker',utleid:false,link:'https://www.finn.no/460544515',img:'https://images.finncdn.no/dynamic/1280w/2026/4/vertical-2/23/5/460/544/515_aa828ef3-9e82-45d4-8035-fd32efba1033.jpg'},
+  {id:15,address:'Haslum – Haslum Terrasse 2',type:'Enebolig',rent:55000,deposit:0,sqm:220,bedrooms:5,bathrooms:3,elIncluded:false,netIncluded:false,parking:'Garasje + Carport',outdoor:true,moveIn:'—',travelCar:'25 min',travelPublic:'30 min',gym:'Friskis Bærum Haslum',utleid:false,link:'https://www.finn.no/461951918',img:'https://images.finncdn.no/dynamic/1280w/2026/5/vertical-2/01/8/461/951/918_e53a91a9-6aaf-4b17-a52d-f2f994ce8d4f.jpg'},
+  {id:16,address:'Vinderen – Solskinnsveien 17F',type:'Enebolig',rent:45000,deposit:0,sqm:115,bedrooms:3,bathrooms:2,elIncluded:false,netIncluded:true,parking:'Garasje EL',outdoor:true,moveIn:'01.06.2026',travelCar:'15 min',travelPublic:'20 min',gym:'SATS Vinderen / Vinderen Gym & Kampsport',utleid:false,link:'https://www.finn.no/realestate/lettings/ad.html?finnkode=462516773',img:'https://images.finncdn.no/dynamic/1280w/2026/5/vertical-2/05/3/462/516/773_c5f25e1c-209d-4f1b-95e1-e224aea8da83.jpg'},
+  {id:17,address:'Holmenkollen – Orreskogen 3',type:'Leilighet',rent:47000,deposit:0,sqm:320,bedrooms:5,bathrooms:2,elIncluded:false,netIncluded:false,parking:'2x Garasje',outdoor:true,moveIn:'25.12.2025',travelCar:'20 min',travelPublic:'25 min',gym:'Heming Treningssenter / SATS Njårdhallen',utleid:false,link:'https://www.finn.no/realestate/lettingsexternal/ad.html?finnkode=443125693',img:'https://images.finncdn.no/dynamic/1280w/lotr/1218829/img_7e24660573cfdc7d789ecaefb33208836c3b4d6c5e9c1a92bb7923f6faa56fc5_webp'},
+  {id:18,address:'Sagene – Sandakerveien 108B',type:'Leilighet',rent:32000,deposit:0,sqm:90,bedrooms:3,bathrooms:2,elIncluded:true,netIncluded:true,parking:'Garasje (inkl)',outdoor:true,moveIn:'01.07.2026',travelCar:'10 min',travelPublic:'12 min',gym:'SATS Sagene / EVO Grünerløkka',utleid:false,link:'https://www.finn.no/realestate/lettings/ad.html?finnkode=463101156',img:'https://images.finncdn.no/dynamic/1280w/2026/5/vertical-2/10/6/463/101/156_a8bdb2d8-c9ba-4196-83cc-1b15b769df05.jpg'},
+  {id:19,address:'St. Hanshaugen – Pilestredet Park 14',type:'Leilighet',rent:36900,deposit:0,sqm:93,bedrooms:3,bathrooms:2,elIncluded:true,netIncluded:true,parking:'Garasje (tillegg)',outdoor:true,moveIn:'01.05.2026',travelCar:'8 min',travelPublic:'10 min',gym:'SATS Bislett / Fresh Fitness Torggata',utleid:false,link:'https://www.finn.no/realestate/lettings/ad.html?finnkode=461755796',img:'https://images.finncdn.no/dynamic/1280w/2026/4/vertical-2/29/6/461/755/796_21a70878-19ad-4297-a8b5-440b6c4eee73.jpg'},
+  {id:20,address:'Nedre Høvik – Bjerkealleen 26B',type:'Enebolig',rent:55000,deposit:0,sqm:358,bedrooms:4,bathrooms:4,elIncluded:false,netIncluded:true,parking:'Dobbeltgarasje EL',outdoor:true,moveIn:'01.06.2026',travelCar:'25 min',travelPublic:'35 min',gym:'Høvikklinikken Treningssenter / XT Sandvika',utleid:false,link:'https://www.finn.no/realestate/lettings/ad.html?finnkode=449552126',img:'https://images.finncdn.no/dynamic/1280w/2026/5/vertical-2/20/6/449/552/126_825b2969-73a6-4523-8fba-c37f1f7c922a.jpg'},
+  {id:21,address:'Kampen – Normannsgata 2',type:'Leilighet',rent:27900,deposit:0,sqm:100,bedrooms:4,bathrooms:1,elIncluded:false,netIncluded:false,parking:'Deles (tillegg)',outdoor:false,moveIn:'24.05.2026',travelCar:'5 min',travelPublic:'8 min',gym:'SATS Kampen / Tøyen Fitness',utleid:false,link:'https://www.finn.no/424355791',img:'https://images.finncdn.no/dynamic/1280w/c9/c96515d3-c367-4c2d-a8a1-34dc24481530'},
+  {id:22,address:'Sagene – Maridalsveien 128',type:'Leilighet',rent:38900,deposit:0,sqm:105,bedrooms:4,bathrooms:1,elIncluded:false,netIncluded:true,parking:'Nei',outdoor:true,moveIn:'01.06.2026',travelCar:'10 min',travelPublic:'12 min',gym:'SATS Sagene / EVO Grünerløkka',utleid:false,link:'https://www.finn.no/462740362',img:'https://images.finncdn.no/dynamic/1280w/2026/5/vertical-2/07/2/462/740/362_4bb11771-011b-4a31-953f-2174ec90b07e.jpg'}
+];
+
+let listings = [];
+let sortKey = 'id';
+let currentFilter = 'all';
+
+function setStatus(msg, state='ok'){
+  document.getElementById('sync-label').textContent = msg;
+  const dot = document.getElementById('dot');
+  dot.className = 'dot' + (state==='syncing'?' syncing':state==='error'?' error':'');
+}
+
+async function apiFetch(path, opts={}){
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    ...opts,
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': opts.prefer || '',
+      ...opts.headers
+    }
+  });
+  if(!res.ok){
+    const err = await res.text();
+    throw new Error(err);
+  }
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+async function loadData(){
+  setStatus('Laster...','syncing');
+  try {
+    const rows = await apiFetch(TABLE + '?select=*');
+    const dbMap = {};
+    rows.forEach(r => dbMap[r.listing_id] = r);
+
+    listings = SEED.map(s => {
+      const db = dbMap[s.id];
+      return {
+        ...s,
+        votes: db ? db.votes : {Henrik:0,Martin:0,Farid:0},
+        status: db ? db.status : {contacted:false,visited:false,applied:false,approved:false}
+      };
+    });
+
+    // Seed any missing rows
+    const missing = SEED.filter(s => !dbMap[s.id]);
+    for(const s of missing){
+      await apiFetch(TABLE, {
+        method:'POST',
+        prefer:'return=minimal',
+        body: JSON.stringify({
+          listing_id: s.id,
+          votes: {Henrik:0,Martin:0,Farid:0},
+          status: {contacted:false,visited:false,applied:false,approved:false}
+        })
+      });
+    }
+
+    setStatus('Synkronisert ✓','ok');
+    render();
+  } catch(e){
+    setStatus('Feil – sjekk nett','error');
+    console.error(e);
+  }
+}
+
+async function saveRow(listingId, votes, status){
+  setStatus('Lagrer...','syncing');
+  try {
+    await apiFetch(TABLE + '?listing_id=eq.' + listingId, {
+      method: 'PATCH',
+      prefer: 'return=minimal',
+      body: JSON.stringify({votes, status})
+    });
+    setStatus('Synkronisert ✓','ok');
+  } catch(e){
+    setStatus('Feil ved lagring','error');
+    console.error(e);
+  }
+}
+
+function voteScore(v){ return Object.values(v).reduce((a,b)=>a+b,0); }
+function setFilter(f,el){ currentFilter=f; document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); render(); }
+function setSort(v){ sortKey=v; render(); }
+
+function getFiltered(){
+  let list = listings.filter(l => {
+    if(currentFilter==='all') return true;
+    if(currentFilter==='new') return !l.status.contacted&&!l.status.visited&&!l.status.approved;
+    if(currentFilter==='contacted') return l.status.contacted&&!l.status.visited;
+    if(currentFilter==='visited') return l.status.visited&&!l.status.approved;
+    if(currentFilter==='approved') return l.status.approved;
+    return true;
+  });
+  if(sortKey==='rent') list=[...list].sort((a,b)=>a.rent-b.rent);
+  else if(sortKey==='sqm') list=[...list].sort((a,b)=>b.sqm-a.sqm);
+  else if(sortKey==='score') list=[...list].sort((a,b)=>voteScore(b.votes)-voteScore(a.votes));
+  return list;
+}
+
+function renderStats(){
+  document.getElementById('stats').innerHTML=`
+    <div class="stat"><div class="stat-label">Totalt</div><div class="stat-val">${listings.length}</div></div>
+    <div class="stat"><div class="stat-label">Kontaktet</div><div class="stat-val">${listings.filter(l=>l.status.contacted).length}</div></div>
+    <div class="stat"><div class="stat-label">Visning</div><div class="stat-val">${listings.filter(l=>l.status.visited).length}</div></div>
+    <div class="stat"><div class="stat-label">Godkjent</div><div class="stat-val">${listings.filter(l=>l.status.approved).length}</div></div>`;
+}
+
+function renderCards(){
+  const list = getFiltered();
+  if(!list.length){
+    document.getElementById('cards').innerHTML='<div class="loading">Ingen boliger i denne visningen</div>';
+    return;
+  }
+  document.getElementById('cards').innerHTML = list.map(l => {
+    const pp = l.rent ? Math.round(l.rent/4).toLocaleString('nb-NO')+' kr' : '—';
+    const score = voteScore(l.votes);
+    const imgHtml = l.img
+      ? `<img class="card-img" src="${l.img}" alt="" loading="lazy">`
+      : `<div class="card-img-placeholder">🏠</div>`;
+    const votersHtml = VOTERS.map(v=>`
+      <div class="voter">
+        <div class="voter-name">${v}</div>
+        <div class="vote-btns">
+          <button class="vote-btn up ${l.votes[v]===1?'active':''}" onclick="vote(${l.id},'${v}',1)">👍</button>
+          <button class="vote-btn down ${l.votes[v]===-1?'active':''}" onclick="vote(${l.id},'${v}',-1)">👎</button>
+        </div>
+      </div>`).join('');
+    const checksHtml = STATUSES.map(s=>`
+      <label class="chk ${l.status[s.key]?'done':''}">
+        <input type="checkbox" ${l.status[s.key]?'checked':''} onchange="toggleStatus(${l.id},'${s.key}',this.checked)">
+        ${s.label}
+      </label>`).join('');
+    const gymTag = l.gym ? `<span class="tag info">🏋️ ${l.gym}</span>` : '';
+    const utleidTag = l.utleid ? `<span class="utleid-badge">Utleid</span>` : '';
+    return `
+    <div class="card ${l.status.approved?'approved':''}">
+      <div class="card-top">
+        ${imgHtml}
+        <div class="card-main">
+          <div class="card-title-row">
+            <div class="card-address">${l.address}${utleidTag}</div>
+            <a class="card-link" href="${l.link}" target="_blank">↗ Finn.no</a>
+          </div>
+          <div class="tags">
+            <span class="tag">${l.type}</span>
+            <span class="tag">🚗 ${l.travelCar}</span>
+            <span class="tag">🚌 ${l.travelPublic}</span>
+            <span class="tag ${l.elIncluded?'yes':'no'}">⚡ Strøm ${l.elIncluded?'inkl.':'eks.'}</span>
+            <span class="tag ${l.netIncluded?'yes':'no'}">📶 Nett ${l.netIncluded?'inkl.':'eks.'}</span>
+            <span class="tag">🅿️ ${l.parking}</span>
+            ${gymTag}
+          </div>
+          <div class="metrics">
+            <div class="metric"><div class="metric-val">${l.sqm}</div><div class="metric-label">kvm</div></div>
+            <div class="metric"><div class="metric-val">${l.bedrooms}</div><div class="metric-label">soverom</div></div>
+            <div class="metric"><div class="metric-val">${l.bathrooms}</div><div class="metric-label">bad</div></div>
+            <div class="metric"><div class="metric-val">${score>0?'+'+score:score}</div><div class="metric-label">score</div></div>
+            <div class="metric"><div class="metric-val" style="font-size:10px">${l.moveIn}</div><div class="metric-label">innflytting</div></div>
+          </div>
+          <div class="price-row">
+            <span class="price">${l.rent?l.rent.toLocaleString('nb-NO')+' kr/mnd':'Pris mangler'}</span>
+            <span class="price-sub">${l.rent?'· '+pp+'/pers':''}${l.deposit?' · Dep. '+l.deposit.toLocaleString('nb-NO')+' kr':''}</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-bottom">
+        <div class="status-checks">${checksHtml}</div>
+        <div class="votes">${votersHtml}<div class="score-badge">${score>0?'+'+score:score}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function render(){ renderStats(); renderCards(); }
+
+async function vote(id, voter, val){
+  const l = listings.find(x=>x.id===id);
+  if(!l) return;
+  l.votes[voter] = l.votes[voter]===val ? 0 : val;
+  render();
+  await saveRow(id, l.votes, l.status);
+}
+
+async function toggleStatus(id, key, val){
+  const l = listings.find(x=>x.id===id);
+  if(!l) return;
+  l.status[key] = val;
+  render();
+  await saveRow(id, l.votes, l.status);
+}
+
+loadData();
+
+// Auto-refresh every 30 seconds to pick up other people's changes
+setInterval(loadData, 30000);
+</script>
+</body>
+</html>
