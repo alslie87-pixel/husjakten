@@ -314,7 +314,7 @@ async function saveRow(id){
   try {
     await apiFetch(TABLE+'?listing_id=eq.'+id, {
       method:'PATCH', prefer:'return=minimal',
-      body: JSON.stringify({votes:l.votes, status:l.status, utleid:l.utleid, viewing:l.viewing})
+      body: JSON.stringify({votes:l.votes, status:l.status, utleid:l.utleid===true, viewing:l.viewing})
     });
     setStatus('Synkronisert ✓','ok');
   } catch(e){
