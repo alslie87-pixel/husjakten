@@ -282,7 +282,7 @@ async function loadData(){
         ...s,
         votes: db?.votes || {Henrik:0,Martin:0,Farid:0},
         status: db?.status || {contacted:false,visited:false,applied:false,approved:false},
-        utleid: db?.utleid !== undefined ? db.utleid : s.utleid,
+        utleid: db ? (db.utleid === true) : false,
         viewing: db?.viewing || {proposed:'',requested:'',confirmed:'',note:''}
       };
     });
