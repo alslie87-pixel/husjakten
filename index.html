@@ -516,11 +516,15 @@ function renderVisning(){
     html += `<div class="unplanned-section">
       <div class="unplanned-title">Ingen dato ennå (${unplanned.length})</div>
       ${unplanned.map(l=>`
-        <div class="unplanned-item" id="vi-${l.id}">
-          <div class="unplanned-addr">${l.address}</div>
-          <button class="add-date-btn" onclick="startEdit(${l.id})">+ Legg til dato</button>
+        <div class="unplanned-item" style="flex-direction:column;align-items:flex-start;gap:.5rem" id="vi-${l.id}">
+          <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+            <div class="unplanned-addr">📍 ${l.address}</div>
+            <button class="add-date-btn" onclick="startEdit(${l.id})">+ Legg til dato</button>
+          </div>
+          <div id="edit-${l.id}" style="width:100%;display:${editingItem===l.id?'block':'none'}">
+            ${editingItem===l.id ? editFormHtml(l) : ''}
+          </div>
         </div>
-        <div id="edit-${l.id}" style="display:none"></div>
       `).join('')}
     </div>`;
   }
