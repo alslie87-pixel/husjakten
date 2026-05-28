@@ -361,10 +361,22 @@ function renderStats(){
 }
 
 function renderCards(){
-  const list = getFiltered();
-  if(!list.length){ document.getElementById('cards').innerHTML='<div style="text-align:center;padding:2rem;color:#aaa">Ingen boliger</div>'; return; }
-  document.getElementById('cards').innerHTML = list.map(l=>{
-    const pp = l.rent ? Math.round(l.rent/4).toLocaleString('nb-NO')+' kr' : '—';
+  const allList = getFiltered();
+  const list = allList.filter(l => !l.utleid);
+  const utleidList = allList.filter(l => l.utleid);
+  const utleidVisible = window._showUtleid || false;
+  if(!list.length && !utleidList.length){ document.getElementById('cards').innerHTML='<div style="text-align:center;padding:2rem;color:#aaa">Ingen boliger</div>'; return; }
+  const utleidSection = utleidList.length ? `
+    <div style="margin-top:1rem">
+      <button onclick="window._showUtleid=!window._showUtleid;renderCards()" style="font-size:12px;padding:5px 12px;border:0.5px solid #ddd;border-radius:8px;background:#fff;color:#888;cursor:pointer;width:100%;text-align:left">
+        ${utleidVisible ? '▲' : '▼'} Vis utleide / ekskluderte (${utleidList.length})
+      </button>
+      ${utleidVisible ? utleidList.map(l=>cardHtml(l)).join('') : ''}
+    </div>` : '';
+  document.getElementById('cards').innerHTML = list.map(l=>cardHtml(l)).join('') + utleidSection;
+}
+function cardHtml(l){
+    const pp = l.rent && l.bedrooms ? Math.round(l.rent/l.bedrooms).toLocaleString('nb-NO')+' kr' : '—';
     const score = voteScore(l.votes);
     const imgHtml = l.img ? `<img class="card-img" src="${l.img}" alt="" loading="lazy">` : `<div class="card-img-placeholder">🏠</div>`;
     const votersHtml = VOTERS.map(v=>`
@@ -409,7 +421,7 @@ function renderCards(){
           </div>
           <div class="price-row">
             <span class="price">${l.rent?l.rent.toLocaleString('nb-NO')+' kr/mnd':'Pris mangler'}</span>
-            <span class="price-sub">${l.rent?'· '+pp+'/pers':''}${l.deposit?' · Dep. '+l.deposit.toLocaleString('nb-NO')+' kr':''}</span>
+            <span class="price-sub">${l.rent && l.bedrooms?'· '+pp+'/rom':''}${l.deposit?' · Dep. '+l.deposit.toLocaleString('nb-NO')+' kr':''}</span>
           </div>
         </div>
       </div>
@@ -418,7 +430,6 @@ function renderCards(){
         <div class="votes">${votersHtml}<div class="score-badge">${score>0?'+'+score:score}</div></div>
       </div>
     </div>`;
-  }).join('');
 }
 
 function render(){ renderStats(); renderCards(); }
